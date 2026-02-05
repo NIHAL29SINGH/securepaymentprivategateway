@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "payment-gateway"
+
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+
+    static_configs:
+      - targets:
+          # 🔴 CHANGE THIS AFTER DEPLOY
+          # put your Render URL here
+          - paymentgateway.onrender.com

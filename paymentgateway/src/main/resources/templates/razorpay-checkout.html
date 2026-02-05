@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Razorpay Checkout</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h2>Ready to Pay</h2>
+
+<button id="payBtn"
+        th:data-key="${razorpayKey}"
+        th:data-order="${orderId}"
+        th:data-amount="${amount}">
+    Pay Now
+</button>
+
+<script>
+    document.getElementById("payBtn").addEventListener("click", function () {
+
+        const key = this.dataset.key;
+        const orderId = this.dataset.order;
+        const amount = Number(this.dataset.amount);
+
+        console.log("KEY:", key);
+        console.log("ORDER:", orderId);
+        console.log("AMOUNT:", amount);
+
+        if (!key || !orderId || amount <= 0) {
+            alert("Invalid payment data");
+            return;
+        }
+
+        const options = {
+            key: key,
+            amount: amount, // already paise
+            currency: "INR",
+            name: "Payment Gateway",
+            description: "Secure Payment",
+            order_id: orderId
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+    });
+</script>
+
+</body>
+</html>
