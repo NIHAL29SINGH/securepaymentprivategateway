@@ -48,6 +48,16 @@ public class PaymentService {
 
     private final Counter paymentSuccessCounter;
     private final Counter paymentFailureCounter;
+    private final Counter paymentRefundCounter;
+    private final Counter paymentCreatedCounter;
+    ;
+    private final Counter paymentFailedAmountCounter;
+    private final Counter paymentRevenueCounter;
+    private final Counter paymentRefundAmountCounter;
+
+
+
+
 
     @Value("${razorpay.key.id}")
     private String razorpayKey;
@@ -69,9 +79,26 @@ public class PaymentService {
         this.emailService = emailService;
 
         this.paymentSuccessCounter =
-                meterRegistry.counter("payments.success");
+                meterRegistry.counter("payments_success_total");
+
         this.paymentFailureCounter =
-                meterRegistry.counter("payments.failure");
+                meterRegistry.counter("payments_failure_total");
+
+        this.paymentRefundCounter =
+                meterRegistry.counter("payments_refunded_total");
+        this.paymentCreatedCounter =
+                meterRegistry.counter("payments_created_total");
+
+        this.paymentFailedAmountCounter =
+                meterRegistry.counter("payments_failed_amount_total");
+
+        this.paymentRevenueCounter =
+                meterRegistry.counter("payments_revenue_total");
+
+        this.paymentRefundAmountCounter =
+                meterRegistry.counter("payments_refunded_amount_total");
+
+
     }
 
     // =========================================
@@ -119,7 +146,7 @@ public class PaymentService {
 
         try {
             JSONObject options = new JSONObject();
-            options.put("amount", (int) (amount * 100));
+            options.put("amount", Math.round (amount * 100));
             options.put("currency", "INR");
             options.put("receipt", "rcpt_" + System.currentTimeMillis());
 
@@ -135,6 +162,9 @@ public class PaymentService {
             payment.setIdempotencyKey(idempotencyKey);
 
             paymentRepo.save(payment);
+            paymentCreatedCounter.increment();  // ✔ correct place
+
+
 
             Map<String, Object> response = new HashMap<>();
             response.put("orderId", order.get("id"));
@@ -152,6 +182,7 @@ public class PaymentService {
 
         } catch (Exception e) {
             paymentFailureCounter.increment();
+            paymentFailedAmountCounter.increment(amount);
             throw new RuntimeException("Razorpay order creation failed", e);
         }
     }
@@ -177,6 +208,8 @@ public class PaymentService {
         paymentRepo.save(payment);
 
         paymentSuccessCounter.increment();
+
+        paymentRevenueCounter.increment(payment.getAmount());
     }
 
     // =========================================
@@ -206,12 +239,19 @@ public class PaymentService {
 
             paymentRepo.save(payment);
 
+            paymentRefundAmountCounter.increment(payment.getAmount());
+
+
             emailService.send(
                     payment.getUser().getEmail(),
                     "Refund Completed",
                     "Refund completed for Order ID: "
                             + payment.getRazorpayOrderId()
+
+
             );
+
+
 
         } catch (RazorpayException e) {
             throw new RuntimeException("Razorpay refund failed", e);
