@@ -1,4 +1,4 @@
-
+Here is your **FINAL README.md (copy-paste ready)** with screenshots paths already added correctly (since README is outside `paymentgateway` folder).
 
 ---
 
@@ -13,272 +13,215 @@
 
 ---
 
-## 📌 Project Overview
+# 📌 Project Overview
 
 **Secure Payment Gateway** is a production-style backend payment system built using **Spring Boot + Razorpay** that simulates how real fintech/payment gateway systems work.
 
-It implements real-world payment architecture including:
+This project demonstrates **real-world payment architecture + observability**.
 
-* Razorpay payment integration
+It includes:
+
+* Razorpay payment lifecycle
 * Idempotent payments using Redis
 * Payment state machine
-* Webhook verification & DB updates
-* Refund workflow with Admin approval
+* Webhook verification
+* Refund workflow with admin approval
 * Email notifications
 * Monitoring using Prometheus + Grafana
 
-This project demonstrates **backend engineering for fintech systems**.
-
 ---
 
-## ✨ Features
+# ✨ Features
 
-### 💰 Razorpay Payment Integration
+## 💰 Razorpay Payment Integration
 
-* Create Razorpay orders securely
-* Capture payment via webhook
-* Store transaction details in database
+* Secure Razorpay order creation
+* Webhook based payment capture
 * Production-style payment lifecycle
 
 ---
 
-### 🔁 Idempotent Payments (Redis)
+## 🔁 Idempotent Payments (Redis)
 
-Prevents duplicate payments if user clicks Pay multiple times.
+Prevents duplicate payments when users retry requests.
 
 * Redis stores idempotency keys
 * Duplicate requests return cached response
-* Prevents double charges 💯
+* Prevents double charging 💯
 
 ---
 
-### 🔐 Payment State Machine
-
-Implements real payment lifecycle:
+## 🔐 Payment State Machine
 
 ```
 CREATED → CAPTURED → SUCCESS → REFUND_REQUESTED → REFUNDED / REJECTED
 ```
 
-Prevents invalid state transitions and ensures **data integrity**.
+Ensures valid state transitions and data integrity.
 
 ---
 
-### 🌐 Razorpay Webhook Integration
+## 🌐 Razorpay Webhook Integration
 
 * Secure signature verification
-* Updates DB automatically on payment success
-* No manual polling required
+* Automatic DB update on payment success
+* Event-driven architecture
 
 ---
 
-### 🔄 Refund Workflow (Admin Approval)
+## 🔄 Refund Workflow (Admin Approval)
 
-Real-world refund flow implemented:
+Real fintech-style refund system:
 
 1. User requests refund
-2. Admin receives email notification
-3. Admin approves/rejects via API
-4. User receives final email
+2. Admin receives email
+3. Admin approves/rejects refund
+4. Razorpay refund triggered
+5. User notified via email
 
 ---
 
-### 📧 Email Notifications
+## 📧 Email Notifications
 
-Automated email system for:
+Automated emails for:
 
-* Refund requested → Admin email
-* Refund approved → User email
-* Refund rejected → User email
-
----
-
-### 📊 Monitoring & Metrics
-
-Full observability stack included:
-
-* Spring Boot Actuator metrics
-* Prometheus scraping
-* Grafana dashboards
-
-Track:
-
-* Payment success rate
-* Payment failures
-* Application health
+* Refund requested → Admin
+* Refund approved → User
+* Refund rejected → User
+* Invoice PDF emails
 
 ---
 
-### 🧠 Production-Ready Backend Design
+# 📊 Observability & Monitoring
 
-* JWT Authentication
-* REST API architecture
-* MySQL/PostgreSQL support
-* Clean layered architecture
+Full **production monitoring stack** implemented.
+
+### Stack Used
+
+* Spring Boot Actuator
+* Micrometer Metrics
+* Prometheus
+* Grafana
 
 ---
 
-## 🛠 Tech Stack
+## 📈 Custom Business Metrics
 
-### 🔹 Backend
+| Metric                         | Description            |
+| ------------------------------ | ---------------------- |
+| payments_total                 | Total payments created |
+| payments_success_total         | Successful payments    |
+| payments_failure_total         | Failed payments        |
+| payments_refunded_total        | Refund count           |
+| payments_revenue_total         | Revenue generated      |
+| payments_refunded_amount_total | Total refunded money   |
+| total_users                    | Total registered users |
 
-* **Java 17**
-* **Spring Boot**
+These simulate **real fintech KPIs**.
+
+---
+
+## 📊 Grafana Dashboards
+
+### Business Metrics Dashboard
+
+* Payments per minute/hour
+* Revenue growth
+* Refund trends
+* Success vs failure rate
+* Total users growth
+
+### System Metrics Dashboard
+
+* JVM memory & CPU
+* DB connection pool
+* HTTP request metrics
+* Thread usage
+
+---
+
+# 🛠 Tech Stack
+
+## Backend
+
+* Java 17
+* Spring Boot
 * Spring Security + JWT
-* Spring Data JPA (Hibernate)
+* Spring Data JPA
 
-### 🔹 Payment Gateway
+## Payment Gateway
 
-* **Razorpay Orders API**
-* **Razorpay Webhooks**
+* Razorpay Orders API
+* Razorpay Webhooks
 * Razorpay Refund API
 
-### 🔹 Database
+## Database
 
-* **MySQL / PostgreSQL**
+* MySQL / PostgreSQL
 
-### 🔹 Idempotency & Caching
+## Caching
 
-* **Redis**
+* Redis
 
-### 🔹 Monitoring
+## Monitoring
 
-* **Spring Boot Actuator**
-* **Prometheus**
-* **Grafana**
-
-### 🔹 Tools
-
-* Postman
-* IntelliJ IDEA
-* Git & GitHub
+* Spring Boot Actuator
+* Micrometer
+* Prometheus
+* Grafana
 
 ---
 
-## ⚙️ How It Works
+# ⚙️ How It Works
 
-### 1️⃣ Create Payment
+## Create Payment
 
-Client sends request to backend:
-
-```json
+```
 POST /api/payment/create
-{
-  "amount": 500
-}
 ```
 
-Backend:
+Creates Razorpay order and stores payment.
 
-* Generates idempotency key
-* Checks Redis
-* Creates Razorpay Order
-* Stores payment in DB
+## Payment Success Webhook
+
+Razorpay triggers → DB updated → metrics updated.
+
+## Refund Flow
+
+User → Request refund → Admin → Approve/Reject → Email notifications.
+
+## Monitoring Pipeline
+
+```
+Spring Boot → Micrometer → Prometheus → Grafana
+```
+
+Prometheus scrapes:
+
+```
+/actuator/prometheus
+```
 
 ---
 
-### 2️⃣ Payment Checkout
+# 🚀 How to Run
 
-Frontend opens Razorpay checkout using:
-
-```
-orderId
-razorpayKey
-```
-
-User completes payment.
-
----
-
-### 3️⃣ Razorpay Webhook Triggered
-
-Razorpay sends secure webhook:
-
-```
-payment.captured
-```
-
-Backend:
-
-* Verifies signature 🔐
-* Updates DB → SUCCESS
-* Stores paymentId
-
----
-
-### 4️⃣ Refund Workflow
-
-#### User Requests Refund
-
-```
-POST /api/payment/refund/request/{paymentId}
-```
-
-Backend:
-
-* Moves payment → REFUND_REQUESTED
-* Sends email to Admin
-
----
-
-#### Admin Approves Refund
-
-```
-POST /api/admin/refund/approve/{paymentId}
-```
-
-Backend:
-
-* Calls Razorpay Refund API
-* Updates DB → REFUNDED
-* Sends email to user
-
----
-
-#### Admin Rejects Refund
-
-```
-POST /api/admin/refund/reject/{paymentId}
-```
-
-User receives rejection email.
-
----
-
-### 5️⃣ Metrics & Monitoring
-
-Prometheus scrapes metrics → Grafana visualizes dashboards.
-
----
-
-## 🚀 How to Run
-
-## 🧩 1. Clone Repository
+## Clone Repo
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/payment-gateway.git
 cd payment-gateway
 ```
 
----
-
-## 🧩 2. Configure application.properties
-
-Open:
-
-```
-src/main/resources/application.properties
-```
-
-Add Razorpay keys:
+## Configure application.properties
 
 ```properties
 razorpay.key.id=YOUR_KEY
 razorpay.key.secret=YOUR_SECRET
-razorpay.webhook.secret=YOUR_WEBHOOK_SECRET
+razorpay.webhook.secret=YOUR_SECRET
 ```
 
-Configure database:
+Database:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/paymentdb
@@ -287,7 +230,7 @@ spring.datasource.password=yourpassword
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-Configure Redis:
+Redis:
 
 ```properties
 spring.data.redis.host=localhost
@@ -296,79 +239,94 @@ spring.data.redis.port=6379
 
 ---
 
-## 🧩 3. Run Backend
+## Run Backend
 
 ```bash
 mvn spring-boot:run
 ```
 
-Backend runs on:
-
-```
-http://localhost:8080
-```
-
 ---
 
-## 🧩 4. Run Prometheus
+## Run Prometheus
 
 ```bash
 prometheus.exe --config.file=prometheus.yml
 ```
 
-Open:
-
-```
-http://localhost:9090
-```
+Open → [http://localhost:9090](http://localhost:9090)
 
 ---
 
-## 🧩 5. Run Grafana
+## Run Grafana
 
-Open:
-
-```
-http://localhost:3000
-```
-
-Login:
-
-```
-admin / admin
-```
-
-Add Prometheus datasource:
-
-```
-http://localhost:9090
-```
-
-Create dashboards 🎉
+Open → [http://localhost:3000](http://localhost:3000)
+Login → **admin / admin**
 
 ---
 
-## 📸 Screenshots
+# 📸 Screenshots
 
-(Add your Grafana & Postman screenshots here)
+## 📊 Grafana Dashboard
 
-```
-screenshots/grafana-dashboard.png
-screenshots/payment-success.png
-screenshots/refund-flow.png
-```
+<img src="paymentgateway/screenshots/grafana-dashboard.png" width="900"/>
+<img src="paymentgateway/screenshots/grafana-dashboard2.png" width="900"/>
 
 ---
 
-## 👨‍💻 Author
+## 💳 Razorpay Checkout
+
+<img src="paymentgateway/screenshots/razorpay-checkout.png" width="700"/>
+
+---
+
+## ✅ Payment Success
+
+<img src="paymentgateway/screenshots/payment-success.png" width="700"/>
+
+---
+
+## 🔐 OAuth Playground (Webhook Testing)
+
+<img src="paymentgateway/screenshots/oauth-playground.png" width="900"/>
+
+---
+
+## 🌐 Webhook via Ngrok
+
+<img src="paymentgateway/screenshots/Webhook-Ngrok.png" width="900"/>
+
+---
+
+## 🚀 Webhook Working
+
+<img src="paymentgateway/screenshots/Webhook-Working.png" width="900"/>
+
+---
+
+# 👨‍💻 Author
 
 **Nihal Singh**
-Built as a personal fintech backend project for portfolio.
-
-© 2026 Nihal Singh. All rights reserved.
 
 ---
 
-## 📄 License
+# 📄 License
 
 This project is licensed under the **MIT License**.
+
+---
+
+## Third-Party Licenses
+
+This project uses the following open-source software:
+
+### Prometheus
+
+Licensed under the **Apache License 2.0**
+[https://github.com/prometheus/prometheus](https://github.com/prometheus/prometheus)
+
+### Grafana
+
+Licensed under the **Apache License 2.0**
+[https://github.com/grafana/grafana](https://github.com/grafana/grafana)
+
+
