@@ -287,13 +287,13 @@ Login → **admin / admin**
 
 ## 🌐 Webhook via Ngrok
 
-<img src="paymentgateway/screenshots/Webhook-Ngrok.png" width="900"/>
+<img src="paymentgateway/screenshots/webhook-ngrok.png" width="900"/>
 
 ---
 
 ## 🚀 Webhook Working
 
-<img src="paymentgateway/screenshots/Webhook-Working.png" width="900"/>
+<img src="paymentgateway/screenshots/webhook-working.png" width="900"/>
 
 ---
 
