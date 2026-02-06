@@ -279,7 +279,7 @@ Login → **admin / admin**
 
 ---
 
-## 🔐 OAuth Playground (Webhook Testing)
+## 🔐 OAuth Playground (OAuth 2.0)
 
 <img src="paymentgateway/screenshots/oauth-playground.png" width="900"/>
 
@@ -298,6 +298,9 @@ Login → **admin / admin**
 ---
 
 =======
+
+## Run Prometheus
+
 [http://localhost:9090](http://localhost:9090)
 
 ## Run Grafana
