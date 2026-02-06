@@ -61,18 +61,28 @@ public class AuthService {
         userRepo.save(user);
 
         // =========================
-        // SEND VERIFICATION LINK
-        // =========================
+// SEND VERIFICATION EMAIL
+// =========================
         if (user.getPassword() == null) {
             EmailVerificationToken token = tokenService.create(user);
 
+            String body =
+                    "Hi " + name + ",\n\n" +
+                            "Welcome to Payment Gateway!\n\n" +
+                            "This is an automated email from your secure payment app.\n\n" +
+                            "To finish setting your password, use this verification code:\n\n" +
+                            "Verification Code: " + token.getToken() + "\n\n" +
+                            "This code expires in 15 minutes.\n\n" +
+                            "If you didn't request this, you can safely ignore this email.\n\n" +
+                            "Thanks,\nPayment Gateway Team";
+
             emailService.send(
                     user.getEmail(),
-                    "Verify your account",
-                    "Click the link to verify your account:\n" +
-                            "http://localhost:8080/api/auth/verify?token=" + token.getToken()
+                    "Payment Gateway Verification Code",
+                    body
             );
         }
+
 
         // =========================
         // 🔥 ADMIN NOTIFICATION
