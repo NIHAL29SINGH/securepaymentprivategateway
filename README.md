@@ -263,6 +263,10 @@ Login → **admin / admin**
 ## 📊 Grafana Dashboard
 
 <img src="paymentgateway/screenshots/grafana-dashboard.png" width="900"/>
+
+
+---
+
 <img src="paymentgateway/screenshots/grafana-dashboard2.png" width="900"/>
 
 ---
@@ -282,6 +286,12 @@ Login → **admin / admin**
 ## 🔐 OAuth Playground (OAuth 2.0)
 
 <img src="paymentgateway/screenshots/oauth-playground.png" width="900"/>
+
+---
+
+## 🌐 Redis For Idempotency
+
+<img src="paymentgateway/screenshots/redis-working(for idempotency).png" width="900"/>
 
 ---
 
