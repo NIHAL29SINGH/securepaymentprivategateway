@@ -1,4 +1,4 @@
-Here is your **FINAL README.md (copy-paste ready)** with screenshots paths already added correctly (since README is outside `paymentgateway` folder).
+
 
 # 💳 Secure Payment Gateway – Spring Boot + Razorpay
 
@@ -235,29 +235,18 @@ spring.data.redis.host=localhost
 spring.data.redis.port=6379
 ```
 
-<<<<<<< HEAD
----
-
-=======
->>>>>>> cd30ce9138e62191199caf468492982a59a17b04
 ## Run Backend
 
 ```bash
 mvn spring-boot:run
 ```
-
-<<<<<<< HEAD
----
-
-=======
->>>>>>> cd30ce9138e62191199caf468492982a59a17b04
 ## Run Prometheus
 
 ```bash
 prometheus.exe --config.file=prometheus.yml
 ```
 
-<<<<<<< HEAD
+
 Open → [http://localhost:9090](http://localhost:9090)
 
 ---
@@ -317,8 +306,6 @@ Login → **admin / admin**
 Login → admin / admin
 
 
-
->>>>>>> cd30ce9138e62191199caf468492982a59a17b04
 # 👨‍💻 Author
 
 **Nihal Singh**
