@@ -64,7 +64,7 @@ public class AdminController {
         return "User deleted";
     }
 
-    // ✅ FIXED KYC ENDPOINT
+    // FIXED KYC ENDPOINT
     @GetMapping("/kyc/{userId}")
     public KycAdminResponse getUserKyc(@PathVariable Long userId) {
         return adminService.getUserKyc(userId);

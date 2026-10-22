@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,7 +35,7 @@ public class PaymentService {
 
     private static final String IDEM_PREFIX = "idem:";
 
-    // ✅ ADMIN EMAIL (as requested)
+    // ADMIN EMAIL
     private static final String ADMIN_EMAIL = "nihallassiyt69@gmail.com";
 
     private final RazorpayClient razorpayClient;
@@ -50,14 +51,10 @@ public class PaymentService {
     private final Counter paymentFailureCounter;
     private final Counter paymentRefundCounter;
     private final Counter paymentCreatedCounter;
-    ;
+
     private final Counter paymentFailedAmountCounter;
     private final Counter paymentRevenueCounter;
     private final Counter paymentRefundAmountCounter;
-
-
-
-
 
     @Value("${razorpay.key.id}")
     private String razorpayKey;
@@ -86,6 +83,7 @@ public class PaymentService {
 
         this.paymentRefundCounter =
                 meterRegistry.counter("payments_refunded_total");
+
         this.paymentCreatedCounter =
                 meterRegistry.counter("payments_created_total");
 
@@ -97,12 +95,10 @@ public class PaymentService {
 
         this.paymentRefundAmountCounter =
                 meterRegistry.counter("payments_refunded_amount_total");
-
-
     }
 
     // =========================================
-    // 🔐 STATE MACHINE GUARD
+    // STATE MACHINE GUARD
     // =========================================
     private void updateStatus(Payment payment, PaymentStatus next) {
         PaymentStateMachine.validate(payment.getStatus(), next);
@@ -110,7 +106,7 @@ public class PaymentService {
     }
 
     // =========================================
-    // ✅ CREATE PAYMENT
+    // CREATE PAYMENT
     // =========================================
     public Map<String, Object> createPayment(
             String email,
@@ -126,12 +122,14 @@ public class PaymentService {
 
         try {
             String cached = redisTemplate.opsForValue().get(redisKey);
+
             if (cached != null) {
                 return objectMapper.readValue(
                         cached,
                         new TypeReference<>() {}
                 );
             }
+
         } catch (Exception ignored) {}
 
         User user = userRepo.findByEmail(email)
@@ -145,32 +143,71 @@ public class PaymentService {
         }
 
         try {
+
             JSONObject options = new JSONObject();
-            options.put("amount", Math.round (amount * 100));
+
+            options.put(
+                    "amount",
+                    Math.round(amount * 100)
+            );
+
             options.put("currency", "INR");
-            options.put("receipt", "rcpt_" + System.currentTimeMillis());
+
+            options.put(
+                    "receipt",
+                    "rcpt_" + System.currentTimeMillis()
+            );
 
             Order order = razorpayClient.orders.create(options);
 
             Payment payment = new Payment();
+
             payment.setUser(user);
             payment.setAmount(amount);
             payment.setCurrency("INR");
-            payment.setRazorpayOrderId(order.get("id"));
-            payment.setStatus(PaymentStatus.CREATED);
-            payment.setCreatedAt(LocalDateTime.now());
-            payment.setIdempotencyKey(idempotencyKey);
+
+            payment.setRazorpayOrderId(
+                    order.get("id")
+            );
+
+            payment.setStatus(
+                    PaymentStatus.CREATED
+            );
+
+            payment.setCreatedAt(
+                    LocalDateTime.now()
+            );
+
+            payment.setIdempotencyKey(
+                    idempotencyKey
+            );
 
             paymentRepo.save(payment);
-            paymentCreatedCounter.increment();  // ✔ correct place
 
+            paymentCreatedCounter.increment();
 
+            Map<String, Object> response =
+                    new HashMap<>();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("orderId", order.get("id"));
-            response.put("amount", order.get("amount"));
-            response.put("currency", "INR");
-            response.put("razorpayKey", razorpayKey);
+            response.put(
+                    "orderId",
+                    order.get("id")
+            );
+
+            response.put(
+                    "amount",
+                    order.get("amount")
+            );
+
+            response.put(
+                    "currency",
+                    "INR"
+            );
+
+            response.put(
+                    "razorpayKey",
+                    razorpayKey
+            );
 
             redisTemplate.opsForValue().set(
                     redisKey,
@@ -181,18 +218,28 @@ public class PaymentService {
             return response;
 
         } catch (Exception e) {
+
             paymentFailureCounter.increment();
+
             paymentFailedAmountCounter.increment(amount);
-            throw new RuntimeException("Razorpay order creation failed", e);
+
+            throw new RuntimeException(
+                    "Razorpay order creation failed",
+                    e
+            );
         }
     }
 
     // =========================================
-    // ✅ WEBHOOK SUCCESS
+    // WEBHOOK SUCCESS
     // =========================================
-    public void markPaymentSuccess(String orderId, String paymentId) {
+    public void markPaymentSuccess(
+            String orderId,
+            String paymentId
+    ) {
 
-        Payment payment = paymentRepo.findByRazorpayOrderId(orderId);
+        Payment payment =
+                paymentRepo.findByRazorpayOrderId(orderId);
 
         if (payment == null) {
             throw new RuntimeException("Payment not found");
@@ -200,78 +247,161 @@ public class PaymentService {
 
         payment.setRazorpayPaymentId(paymentId);
 
-        if (payment.getStatus() == PaymentStatus.CREATED) {
-            payment.setStatus(PaymentStatus.CAPTURED);
+        if (payment.getStatus() ==
+                PaymentStatus.CREATED) {
+
+            payment.setStatus(
+                    PaymentStatus.CAPTURED
+            );
         }
 
-        updateStatus(payment, PaymentStatus.SUCCESS);
+        updateStatus(
+                payment,
+                PaymentStatus.SUCCESS
+        );
+
         paymentRepo.save(payment);
 
         paymentSuccessCounter.increment();
 
-        paymentRevenueCounter.increment(payment.getAmount());
+        paymentRevenueCounter.increment(
+                payment.getAmount()
+        );
     }
 
     // =========================================
-    // ✅ ADMIN APPROVE REFUND
+    // WEBHOOK FAILURE
+    // =========================================
+    public void markPaymentFailed(
+            String orderId,
+            String paymentId
+    ) {
+
+        Payment payment =
+                paymentRepo.findByRazorpayOrderId(orderId);
+
+        if (payment == null) {
+            throw new RuntimeException("Payment not found");
+        }
+
+        // Store Razorpay payment ID
+        payment.setRazorpayPaymentId(paymentId);
+
+        // CREATED -> FAILED
+        updateStatus(
+                payment,
+                PaymentStatus.FAILED
+        );
+
+        // Save FAILED status
+        paymentRepo.save(payment);
+
+        // Metrics
+        paymentFailureCounter.increment();
+
+        paymentFailedAmountCounter.increment(
+                payment.getAmount()
+        );
+    }
+
+    // =========================================
+    // ADMIN APPROVE REFUND
     // =========================================
     public void approveAndRefund(Long paymentId) {
 
         Payment payment = paymentRepo.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Payment not found"));
 
-        if (payment.getStatus() != PaymentStatus.REFUND_REQUESTED) {
-            throw new RuntimeException("Refund not requested");
+        if (payment.getStatus() !=
+                PaymentStatus.REFUND_REQUESTED) {
+
+            throw new RuntimeException(
+                    "Refund not requested"
+            );
         }
 
         try {
-            JSONObject options = new JSONObject();
-            options.put("amount", (int) (payment.getAmount() * 100));
+
+            JSONObject options =
+                    new JSONObject();
+
+            options.put(
+                    "amount",
+                    (int) (payment.getAmount() * 100)
+            );
 
             razorpayClient.payments.refund(
                     payment.getRazorpayPaymentId(),
                     options
             );
 
-            updateStatus(payment, PaymentStatus.REFUNDED);
-            payment.setRefundStatus(RefundStatus.REFUNDED);
-            payment.setRefundedAt(LocalDateTime.now());
+            updateStatus(
+                    payment,
+                    PaymentStatus.REFUNDED
+            );
+
+            payment.setRefundStatus(
+                    RefundStatus.REFUNDED
+            );
+
+            payment.setRefundedAt(
+                    LocalDateTime.now()
+            );
 
             paymentRepo.save(payment);
 
-            paymentRefundAmountCounter.increment(payment.getAmount());
-
+            paymentRefundAmountCounter.increment(
+                    payment.getAmount()
+            );
 
             emailService.send(
                     payment.getUser().getEmail(),
                     "Refund Completed",
                     "Refund completed for Order ID: "
                             + payment.getRazorpayOrderId()
-
-
             );
 
-
-
         } catch (RazorpayException e) {
-            throw new RuntimeException("Razorpay refund failed", e);
+
+            throw new RuntimeException(
+                    "Razorpay refund failed",
+                    e
+            );
         }
     }
 
     // =========================================
-    // ❌ ADMIN REJECT REFUND
+    // ADMIN REJECT REFUND
     // =========================================
-    public void rejectRefund(Long paymentId, String reason) {
+    public void rejectRefund(
+            Long paymentId,
+            String reason
+    ) {
 
-        Payment payment = paymentRepo.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        Payment payment =
+                paymentRepo.findById(paymentId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Payment not found"
+                                ));
 
-        if (payment.getStatus() != PaymentStatus.REFUND_REQUESTED) {
-            throw new RuntimeException("Refund not in requested state");
+        if (payment.getStatus() !=
+                PaymentStatus.REFUND_REQUESTED) {
+
+            throw new RuntimeException(
+                    "Refund not in requested state"
+            );
         }
 
-        updateStatus(payment, PaymentStatus.REFUND_REJECTED);
-        payment.setRefundStatus(RefundStatus.REJECTED);
+        updateStatus(
+                payment,
+                PaymentStatus.REFUND_REJECTED
+        );
+
+        payment.setRefundStatus(
+                RefundStatus.REJECTED
+        );
 
         paymentRepo.save(payment);
 
@@ -283,32 +413,56 @@ public class PaymentService {
     }
 
     // =========================================
-    // ✅ USER REQUEST REFUND (IDEMPOTENT + ADMIN EMAIL)
+    // USER REQUEST REFUND
     // =========================================
-    public void requestRefund(Long paymentId, String userEmail) {
+    public void requestRefund(
+            Long paymentId,
+            String userEmail
+    ) {
 
-        Payment payment = paymentRepo.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        Payment payment =
+                paymentRepo.findById(paymentId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Payment not found"
+                                ));
 
-        if (!payment.getUser().getEmail().equals(userEmail)) {
-            throw new RuntimeException("Unauthorized refund request");
+        if (!payment.getUser()
+                .getEmail()
+                .equals(userEmail)) {
+
+            throw new RuntimeException(
+                    "Unauthorized refund request"
+            );
         }
 
         if (payment.getRazorpayPaymentId() == null) {
-            throw new RuntimeException("Refund not allowed for unpaid payment");
+
+            throw new RuntimeException(
+                    "Refund not allowed for unpaid payment"
+            );
         }
 
-        if (payment.getStatus() == PaymentStatus.REFUND_REQUESTED
-                || payment.getStatus() == PaymentStatus.REFUNDED) {
+        if (payment.getStatus() ==
+                PaymentStatus.REFUND_REQUESTED
+                || payment.getStatus() ==
+                PaymentStatus.REFUNDED) {
+
             return;
         }
 
-        updateStatus(payment, PaymentStatus.REFUND_REQUESTED);
-        payment.setRefundStatus(RefundStatus.REQUESTED);
+        updateStatus(
+                payment,
+                PaymentStatus.REFUND_REQUESTED
+        );
+
+        payment.setRefundStatus(
+                RefundStatus.REQUESTED
+        );
 
         paymentRepo.save(payment);
 
-        // 📧 Email to USER
+        // Email to USER
         emailService.send(
                 userEmail,
                 "Refund Requested",
@@ -317,28 +471,36 @@ public class PaymentService {
                         + " has been sent to admin."
         );
 
-        // 📧 Email to ADMIN
+        // Email to ADMIN
         emailService.send(
                 ADMIN_EMAIL,
                 "New Refund Request",
                 "User: " + userEmail
-                        + "\nOrder ID: " + payment.getRazorpayOrderId()
-                        + "\nAmount: ₹" + payment.getAmount()
+                        + "\nOrder ID: "
+                        + payment.getRazorpayOrderId()
+                        + "\nAmount: ₹"
+                        + payment.getAmount()
         );
     }
 
     // =========================================
-    // ✅ GET PAYMENT BY ORDER ID
+    // GET PAYMENT BY ORDER ID
     // =========================================
-    public Payment getPaymentByOrderId(String orderId) {
-        return paymentRepo.findByRazorpayOrderId(orderId);
+    public Payment getPaymentByOrderId(
+            String orderId
+    ) {
+        return paymentRepo.findByRazorpayOrderId(
+                orderId
+        );
     }
 
     public String getRazorpayKey() {
         return razorpayKey;
     }
 
-
+    // =========================================
+    // SEND INVOICE PDF
+    // =========================================
     @Transactional(readOnly = true)
     public void sendInvoicePdf(
             String email,
@@ -346,71 +508,218 @@ public class PaymentService {
             PasswordEncoder passwordEncoder
     ) {
 
-        User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user =
+                userRepo.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                ));
 
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+        if (!passwordEncoder.matches(
+                rawPassword,
+                user.getPassword()
+        )) {
+
+            throw new RuntimeException(
+                    "Invalid email or password"
+            );
         }
 
         List<Payment> payments =
-                paymentRepo.findAllByUserEmailOrderByCreatedAtDesc(email);
+                paymentRepo
+                        .findAllByUserEmailOrderByCreatedAtDesc(
+                                email
+                        );
 
         if (payments.isEmpty()) {
-            throw new RuntimeException("No payments found");
+
+            throw new RuntimeException(
+                    "No payments found"
+            );
         }
 
-        long success = payments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                .count();
+        long success =
+                payments.stream()
+                        .filter(p ->
+                                p.getStatus() ==
+                                        PaymentStatus.SUCCESS
+                        )
+                        .count();
 
-        long refunded = payments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.REFUNDED)
-                .count();
+        long refunded =
+                payments.stream()
+                        .filter(p ->
+                                p.getStatus() ==
+                                        PaymentStatus.REFUNDED
+                        )
+                        .count();
 
-        double totalPaid = payments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                .mapToDouble(Payment::getAmount)
-                .sum();
+        double totalPaid =
+                payments.stream()
+                        .filter(p ->
+                                p.getStatus() ==
+                                        PaymentStatus.SUCCESS
+                        )
+                        .mapToDouble(
+                                Payment::getAmount
+                        )
+                        .sum();
 
         // =====================
-        // 📄 CREATE PDF
+        // CREATE PDF
         // =====================
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Document document = new Document();
-        PdfWriter.getInstance(document, outputStream);
+        ByteArrayOutputStream outputStream =
+                new ByteArrayOutputStream();
+
+        Document document =
+                new Document();
+
+        PdfWriter.getInstance(
+                document,
+                outputStream
+        );
+
         document.open();
 
-        Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-        Font normalFont = new Font(Font.HELVETICA, 11);
+        Font titleFont =
+                new Font(
+                        Font.HELVETICA,
+                        18,
+                        Font.BOLD
+                );
 
-        document.add(new Paragraph("PAYMENT INVOICE", titleFont));
-        document.add(new Paragraph(" "));
-        document.add(new Paragraph("Name: " + user.getName(), normalFont));
-        document.add(new Paragraph("Email: " + user.getEmail(), normalFont));
-        document.add(new Paragraph(" "));
-        document.add(new Paragraph("Total Payments: " + payments.size(), normalFont));
-        document.add(new Paragraph("Successful Payments: " + success, normalFont));
-        document.add(new Paragraph("Refunded Payments: " + refunded, normalFont));
-        document.add(new Paragraph("Total Amount Paid: ₹" + totalPaid, normalFont));
-        document.add(new Paragraph(" "));
+        Font normalFont =
+                new Font(
+                        Font.HELVETICA,
+                        11
+                );
 
-        document.add(new Paragraph("TRANSACTION DETAILS", titleFont));
-        document.add(new Paragraph(" "));
+        document.add(
+                new Paragraph(
+                        "PAYMENT INVOICE",
+                        titleFont
+                )
+        );
+
+        document.add(
+                new Paragraph(" ")
+        );
+
+        document.add(
+                new Paragraph(
+                        "Name: "
+                                + user.getName(),
+                        normalFont
+                )
+        );
+
+        document.add(
+                new Paragraph(
+                        "Email: "
+                                + user.getEmail(),
+                        normalFont
+                )
+        );
+
+        document.add(
+                new Paragraph(" ")
+        );
+
+        document.add(
+                new Paragraph(
+                        "Total Payments: "
+                                + payments.size(),
+                        normalFont
+                )
+        );
+
+        document.add(
+                new Paragraph(
+                        "Successful Payments: "
+                                + success,
+                        normalFont
+                )
+        );
+
+        document.add(
+                new Paragraph(
+                        "Refunded Payments: "
+                                + refunded,
+                        normalFont
+                )
+        );
+
+        document.add(
+                new Paragraph(
+                        "Total Amount Paid: ₹"
+                                + totalPaid,
+                        normalFont
+                )
+        );
+
+        document.add(
+                new Paragraph(" ")
+        );
+
+        document.add(
+                new Paragraph(
+                        "TRANSACTION DETAILS",
+                        titleFont
+                )
+        );
+
+        document.add(
+                new Paragraph(" ")
+        );
 
         for (Payment p : payments) {
-            document.add(new Paragraph("--------------------------------------"));
-            document.add(new Paragraph("Order ID: " + p.getRazorpayOrderId()));
-            document.add(new Paragraph("Amount: ₹" + p.getAmount()));
-            document.add(new Paragraph("Status: " + p.getStatus()));
-            document.add(new Paragraph("Refund Status: " + p.getRefundStatus()));
-            document.add(new Paragraph("Date: " + p.getCreatedAt()));
+
+            document.add(
+                    new Paragraph(
+                            "--------------------------------------"
+                    )
+            );
+
+            document.add(
+                    new Paragraph(
+                            "Order ID: "
+                                    + p.getRazorpayOrderId()
+                    )
+            );
+
+            document.add(
+                    new Paragraph(
+                            "Amount: ₹"
+                                    + p.getAmount()
+                    )
+            );
+
+            document.add(
+                    new Paragraph(
+                            "Status: "
+                                    + p.getStatus()
+                    )
+            );
+
+            document.add(
+                    new Paragraph(
+                            "Refund Status: "
+                                    + p.getRefundStatus()
+                    )
+            );
+
+            document.add(
+                    new Paragraph(
+                            "Date: "
+                                    + p.getCreatedAt()
+                    )
+            );
         }
 
         document.close();
 
         // =====================
-        // 📧 SEND EMAIL WITH PDF
+        // SEND EMAIL WITH PDF
         // =====================
         emailService.sendWithAttachment(
                 email,
@@ -420,6 +729,4 @@ public class PaymentService {
                 "invoice.pdf"
         );
     }
-
-
 }

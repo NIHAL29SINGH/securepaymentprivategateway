@@ -26,7 +26,7 @@ public class AdminInitializer implements CommandLineRunner {
     public void run(String... args) {
 
         if (userRepository.findByEmail(adminEmail).isPresent()) {
-            System.out.println("✅ Admin already exists");
+            System.out.println(" Admin already exists");
             return;
         }
 
@@ -41,6 +41,6 @@ public class AdminInitializer implements CommandLineRunner {
 
         userRepository.save(admin);
 
-        System.out.println("✅ Admin account created successfully");
+        System.out.println("Admin account created successfully");
     }
 }

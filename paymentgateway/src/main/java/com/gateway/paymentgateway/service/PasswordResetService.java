@@ -38,7 +38,7 @@ public class PasswordResetService {
 
         tokenRepo.save(resetToken);
 
-        // 📩 SEND EMAIL
+        //  SEND EMAIL
         emailService.send(
                 user.getEmail(),
                 "Reset Your Password",

@@ -23,14 +23,14 @@ public class UserPaymentController {
     public List<Payment> getMyPayments(
             @AuthenticationPrincipal UserDetails principal
     ) {
-        // 🔑 Email comes from JWT
+        // Email comes from JWT
         String email = principal.getUsername();
 
-        // 🔁 Convert UserDetails → User entity
+        //  Convert UserDetails → User entity
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 📦 Fetch only logged-in user's payments
+        //  Fetch only logged-in user's payments
         return paymentRepo.findByUserId(user.getId());
     }
 }

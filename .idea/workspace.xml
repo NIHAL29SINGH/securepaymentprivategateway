@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ad3fe4d4-b7cd-4118-87ef-6ba917c04c52" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/paymentgateway/src/main/java/com/gateway/paymentgateway/entity/Payment.java" beforeDir="false" afterPath="$PROJECT_DIR$/paymentgateway/src/main/java/com/gateway/paymentgateway/entity/Payment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paymentgateway/src/main/java/com/gateway/paymentgateway/repository/PaymentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/paymentgateway/src/main/java/com/gateway/paymentgateway/repository/PaymentRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paymentgateway/src/main/java/com/gateway/paymentgateway/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/paymentgateway/src/main/java/com/gateway/paymentgateway/service/PaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paymentgateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/paymentgateway/src/main/resources/application.properties" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="39KSmXyRXgxyrXtfKsTCaA1ITQj" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.PaymentgatewayApplication.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.PaymentgatewayApplication.executor": "Run",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager" selected="Application.PaymentgatewayApplication">
+    <configuration name="PaymentgatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <envs>
+        <env name="DB_USERNAME" value="postgres" />
+        <env name="DB_PASSWORD" value="nihal@2950" />
+        <env name="JWT_SECRET" value="MySuperSecureJwtSecretKeyForPaymentGateway2026!!" />
+        <env name="GOOGLE_CLIENT_ID" value="346791904023-jjka27lcc7um8lu4gf2k3iikfha05068.apps.googleusercontent.com" />
+        <env name="MAIL_USERNAME" value="nihalsingh2950@gmail.com" />
+        <env name="MAIL_PASSWORD" value="rujs ptvk bpsf wgvr" />
+        <env name="ADMIN_EMAIL" value="nihallassiyt69@gmail.com" />
+        <env name="ADMIN_PASSWORD" value="AdminPass@123" />
+        <env name="RAZORPAY_KEY_ID" value="rzp_test_S9Ef1TcXxY5LmI" />
+        <env name="RAZORPAY_KEY_SECRET" value="dx3LGbB85nWum5V3TCOJeylb" />
+        <env name="RAZORPAY_WEBHOOK_SECRET" value="mynewwebhooksecret123" />
+        <env name="fraudlabs.api.url" value="https://api.fraudlabspro.com/v1/order/screen" />
+        <env name="fraudlabs.api.key" value="XRRMVX78CUQGZMKSTDTK1INVW9SD7YJI" />
+      </envs>
+      <option name="MAIN_CLASS_NAME" value="com.gateway.paymentgateway.PaymentgatewayApplication" />
+      <module name="paymentgateway" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.gateway.paymentgateway.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PaymentgatewayApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="DB_USERNAME" value="postgres" />
+        <env name="DB_PASSWORD" value="nihal@2950" />
+        <env name="JWT_SECRET" value="MySuperSecureJwtSecretKeyForPaymentGateway2026!!" />
+        <env name="GOOGLE_CLIENT_ID" value="346791904023-jjka27lcc7um8lu4gf2k3iikfha05068.apps.googleusercontent.com" />
+        <env name="MAIL_USERNAME" value="nihalsingh2950@gmail.com" />
+        <env name="MAIL_PASSWORD" value="rujs ptvk bpsf wgvr" />
+        <env name="ADMIN_EMAIL" value="nihallassiyt69@gmail.com" />
+        <env name="ADMIN_PASSWORD" value="AdminPass@123" />
+        <env name="RAZORPAY_KEY_ID" value="rzp_test_S9Ef1TcXxY5LmI" />
+        <env name="RAZORPAY_KEY_SECRET" value="dx3LGbB85nWum5V3TCOJeylb" />
+        <env name="RAZORPAY_WEBHOOK_SECRET" value="mynewwebhooksecret123" />
+        <env name="fraudlabs.api.url" value="https://api.fraudlabspro.com/v1/order/screen" />
+        <env name="fraudlabs.api.key" value="XRRMVX78CUQGZMKSTDTK1INVW9SD7YJI" />
+      </envs>
+      <module name="paymentgateway" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.gateway.paymentgateway.PaymentgatewayApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.PaymentgatewayApplication" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ad3fe4d4-b7cd-4118-87ef-6ba917c04c52" name="Changes" comment="" />
+      <created>1770443429953</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1770443429953</updated>
+      <workItem from="1770443432399" duration="165000" />
+      <workItem from="1771317756768" duration="2000" />
+      <workItem from="1771366322664" duration="904000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

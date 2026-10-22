@@ -22,47 +22,47 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // ❌ Disable CSRF (JWT + APIs)
+                //  Disable CSRF (JWT + APIs)
                 .csrf(csrf -> csrf.disable())
 
-                // ❌ Stateless (JWT)
+                //  Stateless (JWT)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 🔐 Authorization rules
+                //  Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ Swagger
+                        //  Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // ✅ Actuator (Prometheus / Grafana)
+                        //  Actuator (Prometheus / Grafana)
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // ✅ Auth APIs
+                        //  Auth APIs
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // ✅ Razorpay Webhook (called by Razorpay servers)
+                        //  Razorpay Webhook (called by Razorpay servers)
                         .requestMatchers("/api/payment/webhook").permitAll()
 
-                        // ✅ Razorpay Checkout UI (NO JWT)
+                        //  Razorpay Checkout UI (NO JWT)
                         .requestMatchers(
                                 "/pay",
                                 "/error",
                                 "/favicon.ico"
                         ).permitAll()
 
-                        // 🔐 Admin APIs
+                        //  Admin APIs
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 🔐 Everything else requires JWT
+                        //  Everything else requires JWT
                         .anyRequest().authenticated()
                 )
 
-                // ✅ JWT Filter
+                //  JWT Filter
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -71,7 +71,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 🔑 Password encoder
+    //  Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

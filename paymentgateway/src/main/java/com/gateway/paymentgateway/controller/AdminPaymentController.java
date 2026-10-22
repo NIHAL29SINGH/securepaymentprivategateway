@@ -19,13 +19,13 @@ public class AdminPaymentController {
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
 
-    // ✅ ALL PAYMENTS (ALL USERS)
+    //  ALL PAYMENTS (ALL USERS)
     @GetMapping
     public List<AdminPaymentResponse> getAllPayments() {
         return paymentRepository.findAllPaymentsForAdmin();
     }
 
-    // ✅ PAYMENTS BY USER ID
+    //  PAYMENTS BY USER ID
     @GetMapping("/user/{userId}")
     public List<AdminPaymentResponse> getPaymentsByUserId(
             @PathVariable Long userId
@@ -33,7 +33,7 @@ public class AdminPaymentController {
         return paymentRepository.findPaymentsByUserIdForAdmin(userId);
     }
 
-    // ✅ PAYMENTS BY USER NAME
+    //  PAYMENTS BY USER NAME
     @GetMapping("/user")
     public List<AdminPaymentResponse> getPaymentsByUserName(
             @RequestParam String name
@@ -41,26 +41,26 @@ public class AdminPaymentController {
         return paymentRepository.findPaymentsByUserNameForAdmin(name);
     }
 
-    // ✅ APPROVE REFUND
+    //  APPROVE REFUND
     @PostMapping("/refund/{paymentId}")
     public String approveRefund(@PathVariable Long paymentId) {
         paymentService.approveAndRefund(paymentId);
         return "Refund processed successfully";
     }
-    // ✅ USER-WISE PAYMENT SUMMARY
+    //  USER-WISE PAYMENT SUMMARY
     @GetMapping("/summary/users")
     public List<AdminUserPaymentSummary> getUserPaymentSummary() {
         return paymentRepository.getUserPaymentSummary();
     }
 
-    // ✅ USER PAYMENT SUMMARY BY EMAIL
+    //  USER PAYMENT SUMMARY BY EMAIL
     @GetMapping("/summary/users/email")
     public List<AdminUserPaymentSummary> getUserPaymentSummaryByEmail(
             @RequestParam String email
     ) {
         return paymentRepository.getUserPaymentSummaryByEmail(email);
     }
-    // ✅ SUMMARY BY USER ID
+    //  SUMMARY BY USER ID
     @GetMapping("/summary/users/id/{userId}")
     public List<AdminUserPaymentSummary> getUserPaymentSummaryByUserId(
             @PathVariable Long userId
@@ -68,7 +68,7 @@ public class AdminPaymentController {
         return paymentRepository.getUserPaymentSummaryByUserId(userId);
     }
 
-    // ✅ SUMMARY BY USER NAME (CASE + SPACE INSENSITIVE)
+    //  SUMMARY BY USER NAME (CASE + SPACE INSENSITIVE)
     @GetMapping("/summary/users/name")
     public List<AdminUserPaymentSummary> getUserPaymentSummaryByName(
             @RequestParam String name

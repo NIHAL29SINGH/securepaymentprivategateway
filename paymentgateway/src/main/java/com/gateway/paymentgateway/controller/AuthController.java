@@ -15,8 +15,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
-
-    // ===============================
     // GOOGLE SIGNUP / LOGIN
     // ===============================
     @PostMapping("/google")

@@ -88,7 +88,7 @@ public class UserService {
 
         kycRepo.save(kyc);
 
-        // 📩 Admin Notification
+        //  Admin Notification
         emailService.send(
                 adminEmail,
                 "New KYC Submitted",
@@ -97,7 +97,7 @@ public class UserService {
                         "\n\nLogin to approve KYC."
         );
 
-        // 📩 User Notification
+        //  User Notification
         emailService.send(
                 user.getEmail(),
                 "KYC Submitted",

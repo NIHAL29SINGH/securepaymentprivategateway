@@ -36,45 +36,104 @@ public class AuthService {
     // =========================
     public void googleSignup(String idToken) {
 
+        // Verify Google ID token
         var payload = googleService.verify(idToken);
 
+        // Get email from Google
         String email = payload.getEmail();
+
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email not found in Google account");
+        }
+
+        // =========================
+        // GET NAME FROM GOOGLE
+        // =========================
+
         String name = (String) payload.get("name");
+
+        // If "name" is not available, use given_name + family_name
+        if (name == null || name.isBlank()) {
+
+            String givenName = (String) payload.get("given_name");
+            String familyName = (String) payload.get("family_name");
+
+            if (givenName != null && !givenName.isBlank()) {
+
+                if (familyName != null && !familyName.isBlank()) {
+                    name = givenName + " " + familyName;
+                } else {
+                    name = givenName;
+                }
+
+            } else {
+                // Final fallback
+                name = "User";
+            }
+        }
+
+        System.out.println("Google Email: " + email);
+        System.out.println("Google Name: " + name);
+
+        // =========================
+        // FIND EXISTING USER
+        // =========================
 
         boolean isNewUser = false;
 
         User user = userRepo.findByEmail(email).orElse(null);
 
         if (user == null) {
+
             user = new User();
+
             user.setEmail(email);
+            user.setName(name);
             user.setRole(Role.USER);
             user.setActive(true);
+
             isNewUser = true;
+
+        } else {
+
+            // Update name from Google
+            user.setName(name);
         }
 
-        // ✅ Always update from Google
-        user.setName(name);
+        // =========================
+        // GOOGLE VERIFICATION
+        // =========================
+
         user.setGoogleVerified(true);
-        user.setEmailVerified(true);
+
+        /*
+         * Do NOT set emailVerified = true here.
+         *
+         * The user still has to enter the verification
+         * code and set their password using /verify.
+         */
+        user.setEmailVerified(false);
 
         userRepo.save(user);
 
         // =========================
-// SEND VERIFICATION EMAIL
-// =========================
+        // SEND VERIFICATION CODE
+        // =========================
+
         if (user.getPassword() == null) {
+
             EmailVerificationToken token = tokenService.create(user);
 
             String body =
                     "Hi " + name + ",\n\n" +
                             "Welcome to Payment Gateway!\n\n" +
                             "This is an automated email from your secure payment app.\n\n" +
-                            "To finish setting your password, use this verification code:\n\n" +
+                            "To finish setting up your account, please use the verification code below:\n\n" +
                             "Verification Code: " + token.getToken() + "\n\n" +
                             "This code expires in 15 minutes.\n\n" +
                             "If you didn't request this, you can safely ignore this email.\n\n" +
-                            "Thanks,\nPayment Gateway Team";
+                            "Thanks,\n" +
+                            "Payment Gateway Team";
 
             emailService.send(
                     user.getEmail(),
@@ -83,11 +142,12 @@ public class AuthService {
             );
         }
 
+        // =========================
+        // ADMIN NOTIFICATION
+        // =========================
 
-        // =========================
-        // 🔥 ADMIN NOTIFICATION
-        // =========================
         if (isNewUser) {
+
             emailService.send(
                     adminEmail,
                     "New User Registered",
@@ -100,26 +160,76 @@ public class AuthService {
     }
 
     // =========================
-    // VERIFY EMAIL + SET PASSWORD
+    // VERIFY CODE + SET PASSWORD
     // =========================
     public void verifyEmail(String token, String password) {
 
+        // =========================
+        // VALIDATE PASSWORD
+        // =========================
+
+        if (password == null || password.isBlank()) {
+            throw new RuntimeException("Password cannot be empty");
+        }
+
+        // =========================
+        // FIND VERIFICATION TOKEN
+        // =========================
+
         EmailVerificationToken verification =
                 tokenRepo.findByToken(token)
-                        .orElseThrow(() -> new RuntimeException("Invalid token"));
+                        .orElseThrow(() ->
+                                new RuntimeException("Invalid verification token"));
 
-        if (verification.isUsed())
-            throw new RuntimeException("Token already used");
+        // =========================
+        // CHECK TOKEN USED
+        // =========================
 
-        if (verification.getExpiryTime().isBefore(LocalDateTime.now()))
-            throw new RuntimeException("Token expired");
+        if (verification.isUsed()) {
+            throw new RuntimeException("Verification token already used");
+        }
+
+        // =========================
+        // CHECK TOKEN EXPIRY
+        // =========================
+
+        if (verification.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Verification token expired");
+        }
+
+        // =========================
+        // GET USER
+        // =========================
 
         User user = verification.getUser();
 
-        user.setPassword(passwordEncoder.encode(password));
+        if (user == null) {
+            throw new RuntimeException("User associated with token not found");
+        }
+
+        // =========================
+        // SET PASSWORD
+        // =========================
+
+        user.setPassword(
+                passwordEncoder.encode(password)
+        );
+
+        // =========================
+        // MARK EMAIL VERIFIED
+        // =========================
+
         user.setEmailVerified(true);
 
+        // =========================
+        // MARK TOKEN USED
+        // =========================
+
         verification.setUsed(true);
+
+        // =========================
+        // SAVE
+        // =========================
 
         userRepo.save(user);
         tokenRepo.save(verification);
@@ -130,20 +240,52 @@ public class AuthService {
     // =========================
     public String login(LoginRequest request) {
 
+        // =========================
+        // FIND USER
+        // =========================
+
         User user = userRepo.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
-        if (!user.isEmailVerified())
+        // =========================
+        // CHECK EMAIL VERIFICATION
+        // =========================
+
+        if (!user.isEmailVerified()) {
             throw new RuntimeException("Email not verified");
+        }
 
-        if (!user.isActive())
+        // =========================
+        // CHECK ACCOUNT STATUS
+        // =========================
+
+        if (!user.isActive()) {
             throw new RuntimeException("Account disabled");
+        }
 
-        if (user.getPassword() == null)
+        // =========================
+        // CHECK PASSWORD
+        // =========================
+
+        if (user.getPassword() == null) {
             throw new RuntimeException("Password not set");
+        }
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
+        // =========================
+        // CHECK PASSWORD
+        // =========================
+
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )) {
             throw new RuntimeException("Invalid credentials");
+        }
+
+        // =========================
+        // GENERATE JWT
+        // =========================
 
         return jwtUtil.generateToken(user.getEmail());
     }

@@ -28,47 +28,122 @@ public class RazorpayWebhookController {
             HttpServletRequest request
     ) throws Exception {
 
-        String razorpaySignature = request.getHeader("X-Razorpay-Signature");
+        // =========================================
+        // GET RAZORPAY SIGNATURE
+        // =========================================
+        String razorpaySignature =
+                request.getHeader("X-Razorpay-Signature");
 
-        if (!verifySignature(payload, razorpaySignature, webhookSecret)) {
-            throw new RuntimeException("Invalid webhook signature");
+        // =========================================
+        // VERIFY WEBHOOK SIGNATURE
+        // =========================================
+        if (!verifySignature(
+                payload,
+                razorpaySignature,
+                webhookSecret
+        )) {
+
+            throw new RuntimeException(
+                    "Invalid webhook signature"
+            );
         }
 
         JSONObject json = new JSONObject(payload);
+
         String event = json.getString("event");
 
+        // =========================================
+        // PAYMENT CAPTURED / SUCCESS
+        // =========================================
         if ("payment.captured".equals(event)) {
+
             JSONObject payment = json
                     .getJSONObject("payload")
                     .getJSONObject("payment")
                     .getJSONObject("entity");
 
-            String orderId = payment.getString("order_id");
-            String paymentId = payment.getString("id");
+            String orderId =
+                    payment.getString("order_id");
 
-            paymentService.markPaymentSuccess(orderId, paymentId);
+            String paymentId =
+                    payment.getString("id");
+
+            paymentService.markPaymentSuccess(
+                    orderId,
+                    paymentId
+            );
         }
+
+        // =========================================
+        // PAYMENT FAILED
+        // =========================================
+        else if ("payment.failed".equals(event)) {
+
+            JSONObject payment = json
+                    .getJSONObject("payload")
+                    .getJSONObject("payment")
+                    .getJSONObject("entity");
+
+            String orderId =
+                    payment.getString("order_id");
+
+            String paymentId =
+                    payment.getString("id");
+
+            paymentService.markPaymentFailed(
+                    orderId,
+                    paymentId
+            );
+        }
+
+        // =========================================
+        // OTHER EVENTS
+        // =========================================
+        // Ignore events that this controller
+        // doesn't need to process.
 
         return "OK";
     }
 
+    // =========================================
+    // VERIFY RAZORPAY WEBHOOK SIGNATURE
+    // =========================================
     private boolean verifySignature(
             String payload,
             String actualSignature,
             String secret
     ) throws Exception {
 
-        Mac sha256 = Mac.getInstance("HmacSHA256");
-        SecretKeySpec key = new SecretKeySpec(
-                secret.getBytes(StandardCharsets.UTF_8),
-                "HmacSHA256"
-        );
+        if (actualSignature == null ||
+                actualSignature.isBlank()) {
+
+            return false;
+        }
+
+        Mac sha256 =
+                Mac.getInstance("HmacSHA256");
+
+        SecretKeySpec key =
+                new SecretKeySpec(
+                        secret.getBytes(
+                                StandardCharsets.UTF_8
+                        ),
+                        "HmacSHA256"
+                );
+
         sha256.init(key);
 
-        String expectedSignature = Hex.encodeHexString(
-                sha256.doFinal(payload.getBytes(StandardCharsets.UTF_8))
-        );
+        String expectedSignature =
+                Hex.encodeHexString(
+                        sha256.doFinal(
+                                payload.getBytes(
+                                        StandardCharsets.UTF_8
+                                )
+                        )
+                );
 
-        return expectedSignature.equals(actualSignature);
+        return expectedSignature.equals(
+                actualSignature
+        );
     }
 }

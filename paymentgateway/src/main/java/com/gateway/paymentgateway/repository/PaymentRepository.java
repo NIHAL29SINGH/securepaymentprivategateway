@@ -115,7 +115,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 """)
     List<AdminUserPaymentSummary> getUserPaymentSummary();
     // ===============================
-// ✅ USER PAYMENT SUMMARY BY USER ID
+//  USER PAYMENT SUMMARY BY USER ID
 // ===============================
     @Query("""
     SELECT new com.gateway.paymentgateway.dto.response.AdminUserPaymentSummary(
@@ -136,7 +136,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
 
     // ===============================
-// ✅ USER PAYMENT SUMMARY BY NAME
+//  USER PAYMENT SUMMARY BY NAME
 // (CASE + SPACE INSENSITIVE)
 // ===============================
     @Query("""
