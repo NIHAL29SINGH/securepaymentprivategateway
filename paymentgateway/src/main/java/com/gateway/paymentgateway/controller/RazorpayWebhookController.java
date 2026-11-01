@@ -7,6 +7,9 @@ import org.apache.commons.codec.binary.Hex;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.redis.core.RedisTemplate;
+import java.time.Duration;
+import java.security.MessageDigest;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 public class RazorpayWebhookController {
 
     private final PaymentService paymentService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${razorpay.webhook.secret}")
     private String webhookSecret;
@@ -46,6 +50,13 @@ public class RazorpayWebhookController {
             throw new RuntimeException(
                     "Invalid webhook signature"
             );
+        }
+
+        String eventKey = "webhook:" + sha256(payload);
+        Boolean firstDelivery = redisTemplate.opsForValue()
+                .setIfAbsent(eventKey, "processed", Duration.ofDays(7));
+        if (Boolean.FALSE.equals(firstDelivery)) {
+            return "OK";
         }
 
         JSONObject json = new JSONObject(payload);
@@ -142,8 +153,17 @@ public class RazorpayWebhookController {
                         )
                 );
 
-        return expectedSignature.equals(
-                actualSignature
+        return MessageDigest.isEqual(
+                expectedSignature.getBytes(StandardCharsets.US_ASCII),
+                actualSignature.getBytes(StandardCharsets.US_ASCII)
         );
+    }
+
+    private static String sha256(String value) throws Exception {
+        byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest(value.getBytes(StandardCharsets.UTF_8));
+        StringBuilder result = new StringBuilder();
+        for (byte item : digest) result.append(String.format("%02x", item));
+        return result.toString();
     }
 }

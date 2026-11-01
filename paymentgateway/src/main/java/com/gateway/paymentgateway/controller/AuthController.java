@@ -5,6 +5,7 @@ import com.gateway.paymentgateway.service.AuthService;
 import com.gateway.paymentgateway.service.PasswordResetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public class AuthController {
     // LOGIN
     // ===============================
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest req) {
+    public String login(@Valid @RequestBody LoginRequest req) {
 
         return authService.login(req);
     }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.constraints.Positive;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class PaymentController {
     public Map<String, Object> createPayment(
             @AuthenticationPrincipal UserDetails principal,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @RequestParam Double amount
+            @RequestParam @Positive Double amount
     ) {
         return paymentService.createPayment(
                 principal.getUsername(),

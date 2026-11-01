@@ -207,8 +207,9 @@ Prometheus scrapes:
 ## Clone Repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/payment-gateway.git
-cd payment-gateway
+git clone https://github.com/NIHAL29SINGH/securepaymentprivategateway.git
+cd securepaymentprivategateway
+docker compose up --build
 ```
 
 ## Configure application.properties
@@ -344,5 +345,4 @@ Licensed under the **Apache License 2.0**
 
 Licensed under the **Apache License 2.0**
 [https://github.com/grafana/grafana](https://github.com/grafana/grafana)
-
 

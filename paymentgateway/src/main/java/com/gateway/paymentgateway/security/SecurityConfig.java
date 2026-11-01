@@ -39,8 +39,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        //  Actuator (Prometheus / Grafana)
-                        .requestMatchers("/actuator/**").permitAll()
+                        // Keep health public for orchestration; protect metrics and other endpoints.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/prometheus").hasRole("ADMIN")
 
                         //  Auth APIs
                         .requestMatchers("/api/auth/**").permitAll()
