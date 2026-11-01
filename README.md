@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Java](https://img.shields.io/badge/Java-17+-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-brightgreen)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Integration-blue)
 ![Redis](https://img.shields.io/badge/Redis-Idempotency-red)
 ![Grafana](https://img.shields.io/badge/Monitoring-Grafana-purple)
@@ -206,7 +206,7 @@ flowchart TB
     actions --> validate[Maven validate]
     actions --> tests[Maven tests]
     actions --> package[Spring Boot package]
-    package --> image[Payment Gateway Docker image]
+    package --> artifact[Spring Boot JAR artifact]
 
     subgraph environment[Docker or cloud runtime]
         app[Payment Gateway container]
@@ -214,7 +214,8 @@ flowchart TB
         redis[(Redis container or managed cache)]
     end
 
-    image --> app
+    docker[Docker/Compose build] --> app
+    artifact --> docker
     app --> postgres
     app --> redis
     app --> actuator[Actuator endpoints]
@@ -235,7 +236,7 @@ flowchart TB
 | Razorpay | External order, payment, webhook, and refund provider |
 | Micrometer | Business and JVM metrics for Prometheus and Grafana |
 
-These diagrams describe the implemented architecture. External provider credentials, SMTP, PostgreSQL, and Redis are required for a complete local or cloud runtime.
+These diagrams describe the implemented architecture. GitHub Actions validates, tests, and packages the Spring Boot JAR; Docker Compose builds the runtime image from the application Dockerfile. External provider credentials, SMTP, PostgreSQL, and Redis are required for a complete local or cloud runtime.
 
 ---
 
@@ -353,7 +354,7 @@ These simulate **real fintech KPIs**.
 ## Backend
 
 * Java 17
-* Spring Boot
+* Spring Boot 4.x
 * Spring Security + JWT
 * Spring Data JPA
 
@@ -365,7 +366,7 @@ These simulate **real fintech KPIs**.
 
 ## Database
 
-* MySQL / PostgreSQL
+* PostgreSQL
 
 ## Caching
 
