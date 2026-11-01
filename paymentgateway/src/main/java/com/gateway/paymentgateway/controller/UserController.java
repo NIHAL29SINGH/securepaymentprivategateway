@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -32,7 +33,7 @@ public class UserController {
     @PostMapping("/kyc")
     public String submitKyc(
             @AuthenticationPrincipal UserDetails principal,
-            @RequestBody KycRequest request
+            @Valid @RequestBody KycRequest request
     ) {
         return userService.submitKyc(principal.getUsername(), request);
     }

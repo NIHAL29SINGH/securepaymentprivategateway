@@ -2,10 +2,12 @@ package com.gateway.paymentgateway.service;
 
 import com.gateway.paymentgateway.entity.PasswordResetToken;
 import com.gateway.paymentgateway.entity.User;
+import com.gateway.paymentgateway.exception.ApiException;
 import com.gateway.paymentgateway.repository.PasswordResetTokenRepository;
 import com.gateway.paymentgateway.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,7 +28,8 @@ public class PasswordResetService {
     public void forgotPassword(String email) {
 
         User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND",
+                        "User not found"));
 
         String token = UUID.randomUUID().toString();
 
@@ -54,14 +57,17 @@ public class PasswordResetService {
     public void resetPassword(String token, String newPassword) {
 
         PasswordResetToken resetToken = tokenRepo.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "RESET_TOKEN_INVALID",
+                        "Password reset token is invalid"));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Token already used");
+            throw new ApiException(HttpStatus.CONFLICT, "RESET_TOKEN_USED",
+                    "Password reset token has already been used");
         }
 
         if (resetToken.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token expired");
+            throw new ApiException(HttpStatus.GONE, "RESET_TOKEN_EXPIRED",
+                    "Password reset token has expired");
         }
 
         User user = resetToken.getUser();

@@ -3,6 +3,7 @@ package com.gateway.paymentgateway.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gateway.paymentgateway.entity.*;
+import com.gateway.paymentgateway.exception.ApiException;
 import com.gateway.paymentgateway.repository.PaymentRepository;
 import com.gateway.paymentgateway.repository.UserKycRepository;
 import com.gateway.paymentgateway.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -130,7 +132,10 @@ public class PaymentService {
                 );
             }
 
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "IDEMPOTENCY_UNAVAILABLE",
+                    "Idempotency protection is temporarily unavailable", e);
+        }
 
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -223,10 +228,8 @@ public class PaymentService {
 
             paymentFailedAmountCounter.increment(amount);
 
-            throw new RuntimeException(
-                    "Razorpay order creation failed",
-                    e
-            );
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "PAYMENT_PROVIDER_ERROR",
+                    "The payment provider could not create the order", e);
         }
     }
 

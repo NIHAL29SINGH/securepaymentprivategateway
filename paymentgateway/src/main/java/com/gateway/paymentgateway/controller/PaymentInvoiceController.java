@@ -5,6 +5,7 @@ import com.gateway.paymentgateway.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/payments/invoice")
@@ -15,7 +16,7 @@ public class PaymentInvoiceController {
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/pdf")
-    public String sendPdfInvoice(@RequestBody InvoicePdfRequest request) {
+    public String sendPdfInvoice(@Valid @RequestBody InvoicePdfRequest request) {
 
         paymentService.sendInvoicePdf(
                 request.getEmail(),

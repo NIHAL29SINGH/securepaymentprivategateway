@@ -1,6 +1,7 @@
 package com.gateway.paymentgateway.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -10,6 +11,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+
+import jakarta.servlet.http.HttpServletResponse;
+import java.time.OffsetDateTime;
 
 @Configuration
 @RequiredArgsConstructor
@@ -67,6 +73,10 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint())
+                        .accessDeniedHandler(accessDeniedHandler())
                 );
 
         return http.build();
@@ -76,5 +86,31 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, exception) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("""
+                    {"type":"about:blank","title":"Authentication required","status":401,
+                    "detail":"A valid Bearer token is required","code":"AUTHENTICATION_REQUIRED",
+                    "path":"%s","timestamp":"%s"}"""
+                    .formatted(request.getRequestURI(), OffsetDateTime.now()));
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, exception) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("""
+                    {"type":"about:blank","title":"Access denied","status":403,
+                    "detail":"You do not have permission to access this resource","code":"FORBIDDEN",
+                    "path":"%s","timestamp":"%s"}"""
+                    .formatted(request.getRequestURI(), OffsetDateTime.now()));
+        };
     }
 }

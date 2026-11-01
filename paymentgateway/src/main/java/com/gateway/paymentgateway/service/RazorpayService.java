@@ -2,8 +2,10 @@ package com.gateway.paymentgateway.service;
 
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
+import com.gateway.paymentgateway.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,7 +25,8 @@ public class RazorpayService {
             return order.get("id");
 
         } catch (Exception e) {
-            throw new RuntimeException("Razorpay order creation failed");
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "PAYMENT_PROVIDER_ERROR",
+                    "The payment provider could not create the order", e);
         }
     }
 }

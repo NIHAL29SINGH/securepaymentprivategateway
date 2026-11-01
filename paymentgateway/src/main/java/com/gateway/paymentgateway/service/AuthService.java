@@ -4,12 +4,14 @@ import com.gateway.paymentgateway.dto.request.LoginRequest;
 import com.gateway.paymentgateway.entity.EmailVerificationToken;
 import com.gateway.paymentgateway.entity.Role;
 import com.gateway.paymentgateway.entity.User;
+import com.gateway.paymentgateway.exception.ApiException;
 import com.gateway.paymentgateway.repository.EmailVerificationTokenRepository;
 import com.gateway.paymentgateway.repository.UserRepository;
 import com.gateway.paymentgateway.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +45,8 @@ public class AuthService {
         String email = payload.getEmail();
 
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("Email not found in Google account");
+            throw new ApiException(HttpStatus.BAD_REQUEST, "GOOGLE_EMAIL_MISSING",
+                    "The Google account does not contain an email address");
         }
 
         // =========================
@@ -169,7 +172,8 @@ public class AuthService {
         // =========================
 
         if (password == null || password.isBlank()) {
-            throw new RuntimeException("Password cannot be empty");
+            throw new ApiException(HttpStatus.BAD_REQUEST, "PASSWORD_REQUIRED",
+                    "Password cannot be empty");
         }
 
         // =========================
@@ -179,14 +183,16 @@ public class AuthService {
         EmailVerificationToken verification =
                 tokenRepo.findByToken(token)
                         .orElseThrow(() ->
-                                new RuntimeException("Invalid verification token"));
+                                new ApiException(HttpStatus.NOT_FOUND, "VERIFICATION_TOKEN_INVALID",
+                                        "Verification token is invalid"));
 
         // =========================
         // CHECK TOKEN USED
         // =========================
 
         if (verification.isUsed()) {
-            throw new RuntimeException("Verification token already used");
+            throw new ApiException(HttpStatus.CONFLICT, "VERIFICATION_TOKEN_USED",
+                    "Verification token has already been used");
         }
 
         // =========================
@@ -194,7 +200,8 @@ public class AuthService {
         // =========================
 
         if (verification.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Verification token expired");
+            throw new ApiException(HttpStatus.GONE, "VERIFICATION_TOKEN_EXPIRED",
+                    "Verification token has expired");
         }
 
         // =========================
@@ -204,7 +211,8 @@ public class AuthService {
         User user = verification.getUser();
 
         if (user == null) {
-            throw new RuntimeException("User associated with token not found");
+            throw new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND",
+                    "User associated with the verification token was not found");
         }
 
         // =========================
@@ -246,14 +254,16 @@ public class AuthService {
 
         User user = userRepo.findByEmail(request.getEmail())
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS",
+                                "Invalid email or password"));
 
         // =========================
         // CHECK EMAIL VERIFICATION
         // =========================
 
         if (!user.isEmailVerified()) {
-            throw new RuntimeException("Email not verified");
+            throw new ApiException(HttpStatus.FORBIDDEN, "EMAIL_NOT_VERIFIED",
+                    "Email address has not been verified");
         }
 
         // =========================
@@ -261,7 +271,8 @@ public class AuthService {
         // =========================
 
         if (!user.isActive()) {
-            throw new RuntimeException("Account disabled");
+            throw new ApiException(HttpStatus.FORBIDDEN, "ACCOUNT_DISABLED",
+                    "Account is disabled");
         }
 
         // =========================
@@ -269,7 +280,8 @@ public class AuthService {
         // =========================
 
         if (user.getPassword() == null) {
-            throw new RuntimeException("Password not set");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS",
+                    "Invalid email or password");
         }
 
         // =========================
@@ -280,7 +292,8 @@ public class AuthService {
                 request.getPassword(),
                 user.getPassword()
         )) {
-            throw new RuntimeException("Invalid credentials");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS",
+                    "Invalid email or password");
         }
 
         // =========================
