@@ -21,6 +21,12 @@ public class AuthController {
     @PostMapping("/google")
     public String googleSignup(@RequestBody Map<String, String> req) {
 
+        if (req == null || req.get("idToken") == null || req.get("idToken").isBlank()) {
+            throw new com.gateway.paymentgateway.exception.ApiException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "GOOGLE_TOKEN_REQUIRED",
+                    "idToken is required");
+        }
         authService.googleSignup(req.get("idToken"));
         return "Verification email sent";
     }
@@ -34,6 +40,12 @@ public class AuthController {
             @RequestBody Map<String, String> body
     ) {
 
+        if (token.isBlank() || body == null) {
+            throw new com.gateway.paymentgateway.exception.ApiException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "VERIFICATION_INPUT_INVALID",
+                    "Verification token and password are required");
+        }
         authService.verifyEmail(token, body.get("password"));
         return "Account verified successfully";
     }
@@ -53,6 +65,12 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public String forgotPassword(@RequestParam String email) {
 
+        if (email == null || email.isBlank()) {
+            throw new com.gateway.paymentgateway.exception.ApiException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "EMAIL_REQUIRED",
+                    "Email is required");
+        }
         passwordResetService.forgotPassword(email);
         return "Password reset token sent to email";
     }
@@ -66,6 +84,12 @@ public class AuthController {
             @RequestParam String newPassword
     ) {
 
+        if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {
+            throw new com.gateway.paymentgateway.exception.ApiException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "RESET_INPUT_INVALID",
+                    "Reset token and new password are required");
+        }
         passwordResetService.resetPassword(token, newPassword);
         return "Password reset successful";
     }

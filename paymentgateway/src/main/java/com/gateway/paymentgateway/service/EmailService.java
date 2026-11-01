@@ -1,11 +1,13 @@
 package com.gateway.paymentgateway.service;
 
 import jakarta.mail.internet.MimeMessage;
+import com.gateway.paymentgateway.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,13 +17,16 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     public void send(String to, String subject, String body) {
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-
-        mailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "EMAIL_DELIVERY_FAILED",
+                    "The email could not be delivered", e);
+        }
     }
     public void sendWithAttachment(
             String to,
@@ -43,7 +48,8 @@ public class EmailService {
 
             mailSender.send(message);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send invoice email", e);
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "EMAIL_DELIVERY_FAILED",
+                    "The email could not be delivered", e);
         }
     }
 

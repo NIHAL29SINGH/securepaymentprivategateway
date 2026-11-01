@@ -1,12 +1,14 @@
 package com.gateway.paymentgateway.controller;
 
 import com.gateway.paymentgateway.service.PaymentService;
+import com.gateway.paymentgateway.exception.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.data.redis.core.RedisTemplate;
 import java.time.Duration;
 import java.security.MessageDigest;
@@ -47,9 +49,8 @@ public class RazorpayWebhookController {
                 webhookSecret
         )) {
 
-            throw new RuntimeException(
-                    "Invalid webhook signature"
-            );
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "WEBHOOK_SIGNATURE_INVALID",
+                    "Webhook signature is invalid");
         }
 
         String eventKey = "webhook:" + sha256(payload);

@@ -4,7 +4,9 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.gateway.paymentgateway.exception.ApiException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,13 +29,18 @@ public class GoogleOAuthService {
 
             GoogleIdToken token = verifier.verify(idToken);
 
-            if (token == null)
-                throw new RuntimeException("Invalid Google Token");
+            if (token == null) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "GOOGLE_TOKEN_INVALID",
+                        "Google identity token is invalid or expired");
+            }
 
             return token.getPayload();
 
+        } catch (ApiException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Google verification failed", e);
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "GOOGLE_VERIFICATION_FAILED",
+                    "Google identity verification could not be completed", e);
         }
     }
 }
