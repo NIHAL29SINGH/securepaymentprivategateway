@@ -29,6 +29,216 @@ It includes:
 
 ---
 
+# 🏛️ Architecture
+
+The application is a stateless Spring Boot payment API. PostgreSQL is the system of record, Redis provides short-lived idempotency and webhook replay protection, and Razorpay remains the external payment provider. Secrets and integration settings are supplied through environment variables.
+
+## System Context
+
+```mermaid
+flowchart LR
+    customer[Customer]
+    admin[Administrator]
+    api[Spring Boot Payment API]
+    db[(PostgreSQL)]
+    redis[(Redis)]
+    razorpay[Razorpay APIs]
+    mail[SMTP Email Provider]
+    metrics[Prometheus]
+    dashboards[Grafana]
+
+    customer -->|HTTPS + JWT| api
+    admin -->|HTTPS + JWT + ADMIN role| api
+    razorpay -->|Signed webhook| api
+
+    api -->|JPA transactions| db
+    api -->|Idempotency keys and replay keys| redis
+    api -->|Create orders and refunds| razorpay
+    api -->|Refund, KYC, invoice notifications| mail
+    api -->|Micrometer metrics| metrics
+    metrics --> dashboards
+```
+
+## Runtime Component Architecture
+
+```mermaid
+flowchart TB
+    subgraph clients[Clients]
+        user[User or Admin]
+        checkout[Razorpay Checkout Page]
+    end
+
+    subgraph app[Payment Gateway Application]
+        security[Spring Security Filter Chain]
+        jwt[JwtFilter + JwtUtil]
+        controllers[REST Controllers]
+        services[Application Services]
+        state[PaymentStateMachine]
+        metrics[PaymentMetrics + UserMetrics]
+        email[EmailService]
+        razorConfig[RazorpayConfig]
+    end
+
+    subgraph data[Persistence and Cache]
+        repositories[Spring Data JPA Repositories]
+        postgres[(PostgreSQL)]
+        redis[(Redis)]
+    end
+
+    razorpay[Razorpay Orders, Payments, Refunds]
+    smtp[SMTP Provider]
+    prometheus[Prometheus]
+    grafana[Grafana]
+
+    user -->|Bearer token and API request| security
+    security --> jwt
+    jwt --> controllers
+    controllers --> services
+    services --> state
+    services --> repositories
+    repositories --> postgres
+    services -->|Payment idempotency| redis
+    services --> razorConfig
+    razorConfig --> razorpay
+    razorpay -->|X-Razorpay-Signature webhook| controllers
+    services --> email
+    email --> smtp
+    services --> metrics
+    metrics --> prometheus
+    prometheus --> grafana
+    checkout -->|Hosted checkout interaction| razorpay
+```
+
+## Payment Creation and Idempotency Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant API as Spring Boot API
+    participant JWT as JwtFilter
+    participant Redis
+    participant DB as PostgreSQL
+    participant RZ as Razorpay
+
+    User->>API: POST /api/payment/create<br/>Authorization + Idempotency-Key
+    API->>JWT: Validate JWT and load principal
+    JWT-->>API: Authenticated user
+    API->>Redis: GET idem:{key}
+
+    alt Cached response exists
+        Redis-->>API: Previously created order
+        API-->>User: Return same order response
+    else First request
+        API->>DB: Load user and approved KYC
+        DB-->>API: User and KYC status
+        API->>RZ: Create order
+        RZ-->>API: Razorpay order ID
+        API->>DB: Save payment as CREATED
+        API->>Redis: SET idem:{key} with short TTL
+        API-->>User: Return order ID and amount
+    end
+```
+
+## Razorpay Webhook Verification and State Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant RZ as Razorpay
+    participant API as Webhook Controller
+    participant Redis
+    participant DB as PostgreSQL
+    participant Metrics as Micrometer
+
+    RZ->>API: POST /api/payment/webhook<br/>Payload + X-Razorpay-Signature
+    API->>API: Compute HMAC-SHA256(payload)
+    API->>API: Constant-time signature comparison
+
+    alt Invalid signature
+        API-->>RZ: Reject request
+    else Valid signature
+        API->>Redis: SETNX webhook:{payload SHA-256}<br/>TTL 7 days
+        alt Duplicate delivery
+            Redis-->>API: Key already exists
+            API-->>RZ: OK without reprocessing
+        else First delivery
+            Redis-->>API: Key stored
+            API->>DB: Find payment by Razorpay order ID
+            API->>DB: Transition payment state
+            API->>Metrics: Increment success/failure counters
+            API-->>RZ: OK
+        end
+    end
+```
+
+## Refund and Notification Flow
+
+```mermaid
+flowchart LR
+    user[Authenticated User]
+    payment[Payment API]
+    db[(PostgreSQL)]
+    adminUser[Administrator]
+    adminApi[Admin API]
+    razorpay[Razorpay Refund API]
+    email[EmailService]
+    smtp[SMTP Provider]
+
+    user -->|Request refund| payment
+    payment -->|Validate ownership and state| db
+    payment -->|Set REFUND_REQUESTED| db
+    payment -->|Notify admin| email
+    email --> smtp
+    adminUser -->|Approve or reject| adminApi
+    adminApi -->|Update refund state| db
+    adminApi -->|Approved refund| razorpay
+    razorpay -->|Refund result| adminApi
+    adminApi -->|Notify user| email
+```
+
+## Deployment and Observability
+
+```mermaid
+flowchart TB
+    developer[Developer] -->|Push or pull request| github[GitHub]
+    github --> actions[GitHub Actions]
+    actions --> validate[Maven validate]
+    actions --> tests[Maven tests]
+    actions --> package[Spring Boot package]
+    package --> image[Payment Gateway Docker image]
+
+    subgraph environment[Docker or cloud runtime]
+        app[Payment Gateway container]
+        postgres[(PostgreSQL container or managed DB)]
+        redis[(Redis container or managed cache)]
+    end
+
+    image --> app
+    app --> postgres
+    app --> redis
+    app --> actuator[Actuator endpoints]
+    actuator --> prometheus[Prometheus]
+    prometheus --> grafana[Grafana dashboards]
+```
+
+### Request and Data Boundaries
+
+| Boundary | Responsibility |
+| --- | --- |
+| Security filter | Validates JWTs and establishes the authenticated principal |
+| REST controllers | Accepts HTTP requests and delegates to services |
+| Application services | Applies payment, KYC, refund, email, and idempotency rules |
+| State machine | Rejects invalid payment-state transitions |
+| PostgreSQL | Durable users, payments, KYC, tokens, and transaction records |
+| Redis | Short-lived idempotency responses and webhook replay keys |
+| Razorpay | External order, payment, webhook, and refund provider |
+| Micrometer | Business and JVM metrics for Prometheus and Grafana |
+
+These diagrams describe the implemented architecture. External provider credentials, SMTP, PostgreSQL, and Redis are required for a complete local or cloud runtime.
+
+---
+
 # ✨ Features
 
 ## 💰 Razorpay Payment Integration
@@ -345,4 +555,3 @@ Licensed under the **Apache License 2.0**
 
 Licensed under the **Apache License 2.0**
 [https://github.com/grafana/grafana](https://github.com/grafana/grafana)
-
